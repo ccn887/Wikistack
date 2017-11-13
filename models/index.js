@@ -50,10 +50,13 @@ var User = db.define('user', {
   email: {
       type: Sequelize.STRING,
       allowNull: false,
-      validate: {
-        isEmail: true
-  }}
+  //     validate: {
+  //       isEmail: true
+  // }}
+  }
 });
+
+Page.belongsTo(User, { as: 'author' });
 
 // function generateUrlTitle (title) {
 //   if (title) {

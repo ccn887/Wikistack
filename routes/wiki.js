@@ -1,7 +1,6 @@
 const express = require('express');
 const app = express();
 const bodyparser = require('body-parser')
-
 const userrouter = require('./user.js')
 const routers = require('./index.js')
 const router = express.Router();
@@ -17,11 +16,22 @@ module.exports = router
 // router.use('/user', userrouter)
 
 router.get('/', function(req, res, next) {
-  res.send('got to GET /wiki/');
-});
-router.get('/', function(req, res, next) {
-  res.redirect('/')
-});
+    Page.findAll()
+    .then(function(foundPages){
+      // console.log('foundPages: ', Object.keys(foundPages))
+      var pageArr = Object.keys(foundPages)
+      console.log('PageArr: ', pageArr)
+      console.log('foundpages: ', foundPages)
+      res.render('index', {pages: foundPages});
+      //res.render('wikipage', {foundPage: page}
+    })
+    .catch(next);
+
+  });
+
+// router.get('/', function(req, res, next) {
+//   res.redirect('/')
+// });
 router.get('/add', function(req, res) {
   res.render('addpage');
 })
@@ -33,23 +43,61 @@ router.get('/:urlTitle', function (req, res, next) {
     }
   })
   .then(function(foundPage){
-    console.log('we found', foundPage)
-    res.json(foundPage);
+    res.render('wikipage', {newPage: foundPage} );
+    //res.render('wikipage', {foundPage: page}
   })
   .catch(next);
 
 });
 
 router.post('/', function(req, res, next) {
-  console.log('req.body', req.body)
-  console.log('title', req.body.title)
-   Page.create({
+User.findOrCreate({
+  where: {
+    name: req.body.authorname,
+    email: req.body.authoremail
+  }
+})
+.then(function (values) {
+
+  var user = values[0];
+  console.log('user: ',user)
+
+
+  var newPage = Page.build({
     title: req.body.title,
     content: req.body.contenttext
-  })
-  .then((value) => {res.redirect(value.route)})
-  // res.send('got to POST /wiki/');
+  });
+  return newPage.save().then(function (newPage) {
+    return newPage.setAuthor(user);
+  });
+
+})
+.then(function (newPage) {
+  res.redirect(newPage.route);
+})
+.catch(next);
 });
+
+// router.post('/', function(req, res, next) {
+//   // console.log('req.body', req.body)
+//   // console.log('title', req.body.title)
+//   var newUser = User.create({
+//     name: req.body.authorname,
+//     email: req.body.authoremail
+//   }).then(function(value){
+//     console.log('the value')
+//     return value
+//   })
+//    var newPage = Page.create({
+//     title: req.body.title,
+//     content: req.body.contenttext,
+//     authorId: newUser.id
+//   })
+//   .then((value) => {res.redirect(value.route)})
+
+
+  // res.send('got to POST /wiki/');
+// });s
 
 // router.post('/', function(req, res, next) {
 //   console.log('req.body', req.body)
